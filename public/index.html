@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Generator — Gas Connection Affidavits</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f8f5f0;
+    --cream: #ede8df;
+    --gold: #c9922a;
+    --gold-light: #e8c06a;
+    --accent: #2c5f8a;
+    --accent-light: #d4e8f7;
+    --red: #b83232;
+    --green: #2a7a4a;
+    --border: #d5cfc5;
+    --shadow: 0 4px 24px rgba(26,26,46,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    border-bottom: 3px solid var(--gold);
+    position: relative;
+  }
+  header .logo-mark {
+    width: 48px; height: 48px;
+    background: var(--gold);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+  }
+  header p {
+    font-size: 0.8rem;
+    opacity: 0.55;
+    margin-top: 3px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ── Language Toggle ── */
+  .lang-toggle {
+    position: absolute;
+    top: 20px; right: 24px;
+    display: flex;
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .lang-btn {
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    padding: 6px 16px;
+    border-radius: 26px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .lang-btn.active {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
+  /* ── Main Layout ── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Doc Selection ── */
+  .doc-chooser {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .doc-card {
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 10px;
+    padding: 24px 20px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  .doc-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .doc-card:hover { border-color: var(--gold); box-shadow: var(--shadow); }
+  .doc-card:hover::before { background: var(--gold-light); }
+  .doc-card.active { border-color: var(--gold); background: #fffcf5; }
+  .doc-card.active::before { background: var(--gold); }
+  .doc-card .icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .doc-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .doc-card p { font-size: 0.78rem; color: #666; line-height: 1.5; font-weight: 300; }
+  .doc-card .check {
+    position: absolute; top: 14px; right: 14px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: scale(0.6);
+    transition: all 0.2s;
+    color: white; font-size: 13px;
+  }
+  .doc-card.active .check { opacity: 1; transform: scale(1); }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Form ── */
+  .form-area { display: none; }
+
+  .form-section {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .form-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--cream);
+    color: var(--ink);
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.full { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.span2 { grid-column: span 2; }
+  .field label { font-size: 0.78rem; font-weight: 600; color: #555; letter-spacing: 0.03em; }
+  .field input, .field select {
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,146,42,0.12);
+    background: white;
+  }
+  .field input::placeholder { color: #aaa; }
+  .field .hint { font-size: 0.72rem; color: #999; font-weight: 300; }
+
+  /* date input wrapper — show dd/mm/yyyy placeholder */
+  .date-wrap { position: relative; }
+  .date-wrap input[type="text"] {
+    padding-right: 36px;
+  }
+  .date-wrap .cal-icon {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 1rem; pointer-events: none; opacity: 0.4;
+  }
+
+  .title-name { display: grid; grid-template-columns: 100px 1fr; gap: 10px; }
+
+  /* ── Download Buttons ── */
+  .generate-wrap {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn-generate {
+    border: none;
+    border-radius: 8px;
+    padding: 14px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.1s, opacity 0.2s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .btn-docx {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-docx:hover { background: #2c2c4a; }
+  .btn-pdf {
+    background: var(--red);
+    color: white;
+  }
+  .btn-pdf:hover { background: #9a2020; }
+  .btn-generate:active { transform: scale(0.98); }
+  .btn-generate:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .btn-generate .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .btn-generate.loading .spinner { display: block; }
+  .btn-generate.loading .btn-text { opacity: 0.7; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-msg {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 6px;
+    display: none;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .status-msg.error { background: #fdeaea; color: var(--red); display: block; }
+  .status-msg.success { background: #e8f7ef; color: var(--green); display: block; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .doc-chooser { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.three { grid-template-columns: 1fr 1fr; }
+    .field.span2 { grid-column: span 1; }
+    header { padding: 20px 20px 16px; }
+    header h1 { font-size: 1.15rem; }
+    .container { padding: 24px 16px 60px; }
+    .lang-toggle { top: auto; bottom: -20px; right: 16px; }
+    .generate-wrap { flex-direction: column; align-items: stretch; }
+    .btn-generate { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">A</div>
+  <div>
+    <h1 data-i18n="header_title">Gas Connection Document Generator</h1>
+    <p data-i18n="header_sub">S. Rasiklal &amp; Brothers · Mahad, Raigad</p>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">English</button>
+    <button class="lang-btn" onclick="setLang('mr')">मराठी</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="section-label" style="margin-bottom:20px;" data-i18n="select_doc">Select Document Type</div>
+
+  <div class="doc-chooser">
+    <div class="doc-card" id="card-ration" onclick="selectDoc('no-ration')">
+      <span class="icon">📋</span>
+      <h2 data-i18n="card_ration_title">No Ration Card Affidavit</h2>
+      <p data-i18n="card_ration_desc">For new LPG connections where applicant does not have a ration card</p>
+      <div class="check">✓</div>
+    </div>
+    <div class="doc-card" id="card-affidavit" onclick="selectDoc('affidavit')">
+      <span class="icon">📜</span>
+      <h2 data-i18n="card_affidavit_title">Affidavit for Change of Name</h2>
+      <p data-i18n="card_affidavit_desc">Transfer HP Gas connection from deceased family member to applicant</p>
+      <div class="check">✓</div>
+    </div>
+  </div>
+
+  <!-- NO RATION CARD FORM -->
+  <div id="form-no-ration" class="form-area">
+    <div class="section-label" data-i18n="applicant_details">Applicant Details</div>
+    <div class="form-section">
+      <h3 data-i18n="personal_info">Personal Information</h3>
+      <div class="form-grid">
+        <div class="field span2">
+          <label data-i18n="full_name_title">Full Name with Title</label>
+          <div class="title-name">
+            <select id="nr-title">
+              <option value="Mr" data-i18n-opt="mr_title">Mr</option>
+              <option value="Mrs" data-i18n-opt="mrs_title">Mrs</option>
+              <option value="Miss" data-i18n-opt="miss_title">Miss</option>
+            </select>
+            <input id="nr-fullname" type="text" data-i18n-ph="ph_fullname" placeholder="e.g. Pradeep Sampat Katkar">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="father_husband">Father's / Husband's Name</label>
+          <input id="nr-father" type="text" data-i18n-ph="ph_father" placeholder="e.g. Sampat Katkar">
+        </div>
+        <div class="field">
+          <label data-i18n="age">Age (years)</label>
+          <input id="nr-age" type="number" data-i18n-ph="ph_age" placeholder="e.g. 34" min="18" max="120">
+        </div>
+        <div class="field">
+          <label data-i18n="dob">Date of Birth</label>
+          <div class="date-wrap">
+            <input id="nr-dob" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="today_date">Today's Date</label>
+          <div class="date-wrap">
+            <input id="nr-today" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+        <div class="field span2">
+          <label data-i18n="address">Residential Address</label>
+          <input id="nr-address" type="text" data-i18n-ph="ph_address" placeholder="e.g. Nangalwadi Phata Mahad Dist Raigad M.I.D.C 402301">
+        </div>
+      </div>
+    </div>
+
+    <div class="generate-wrap">
+      <button class="btn-generate btn-docx" id="btn-nr-docx" onclick="generateDoc('no-ration','docx')">
+        <div class="spinner"></div>
+        <span class="btn-text" data-i18n="btn_download_doc">⬇ Download Document (.docx)</span>
+      </button>
+      <button class="btn-generate btn-pdf" id="btn-nr-pdf" onclick="generateDoc('no-ration','pdf')">
+        <div class="spinner"></div>
+        <span class="btn-text" data-i18n="btn_download_pdf">⬇ Download PDF</span>
+      </button>
+      <div class="status-msg" id="status-nr"></div>
+    </div>
+  </div>
+
+  <!-- AFFIDAVIT FORM -->
+  <div id="form-affidavit" class="form-area">
+    <div class="section-label" data-i18n="doc_applicant_details">Document &amp; Applicant Details</div>
+
+    <div class="form-section">
+      <h3 data-i18n="dates">Dates</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="magistrate_date">Magistrate Date (top of doc)</label>
+          <div class="date-wrap">
+            <input id="af-magdate" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="today_date">Today's Date (bottom of doc)</label>
+          <div class="date-wrap">
+            <input id="af-today" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 data-i18n="applicant_living">Applicant (Living Person)</h3>
+      <div class="form-grid">
+        <div class="field span2">
+          <label data-i18n="full_name_title">Full Name with Title</label>
+          <div class="title-name">
+            <select id="af-title">
+              <option value="Mr">Mr</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Miss">Miss</option>
+            </select>
+            <input id="af-fullname" type="text" data-i18n-ph="ph_fullname_af" placeholder="e.g. Gajanan Damodar Mahadik">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="age">Age (years)</label>
+          <input id="af-age" type="number" data-i18n-ph="ph_age" placeholder="e.g. 74" min="18" max="120">
+        </div>
+        <div class="field">
+          <label data-i18n="occupation">Occupation</label>
+          <input id="af-occupation" type="text" data-i18n-ph="ph_occupation" placeholder="e.g. Farmer">
+        </div>
+        <div class="field span2">
+          <label data-i18n="address">Resident Address</label>
+          <input id="af-address" type="text" data-i18n-ph="ph_address_af" placeholder="e.g. Adhi Dongroli Mahad Raigad 402103">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 data-i18n="deceased_person">Deceased Person (HP Gas Connection Holder)</h3>
+      <div class="form-grid">
+        <div class="field span2">
+          <label data-i18n="relation">Relation to Applicant</label>
+          <select id="af-relation">
+            <option value="Wife" data-i18n-opt="rel_wife">Wife</option>
+            <option value="Husband" data-i18n-opt="rel_husband">Husband</option>
+            <option value="Mother" data-i18n-opt="rel_mother">Mother</option>
+            <option value="Father" data-i18n-opt="rel_father">Father</option>
+            <option value="Grandmother" data-i18n-opt="rel_grandmother">Grandmother</option>
+            <option value="Grandfather" data-i18n-opt="rel_grandfather">Grandfather</option>
+            <option value="Sister" data-i18n-opt="rel_sister">Sister</option>
+            <option value="Brother" data-i18n-opt="rel_brother">Brother</option>
+            <option value="Son" data-i18n-opt="rel_son">Son</option>
+            <option value="Daughter" data-i18n-opt="rel_daughter">Daughter</option>
+          </select>
+        </div>
+        <div class="field span2">
+          <label data-i18n="full_name_title">Full Name with Title</label>
+          <div class="title-name">
+            <select id="af-dec-title">
+              <option value="Mrs">Mrs</option>
+              <option value="Mr">Mr</option>
+              <option value="Miss">Miss</option>
+            </select>
+            <input id="af-dec-name" type="text" data-i18n-ph="ph_dec_name" placeholder="e.g. Saraswati Gajanan Mahadik">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="expired_on">Expired On (date)</label>
+          <div class="date-wrap">
+            <input id="af-expdate" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="expired_at">Expired At (place)</label>
+          <input id="af-expplace" type="text" data-i18n-ph="ph_expplace" placeholder="e.g. Dongroli (Adhi)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 data-i18n="gas_details">Gas Connection Details</h3>
+      <div class="form-grid three">
+        <div class="field">
+          <label data-i18n="sv_number">SV Number</label>
+          <input id="af-svnum" type="text" placeholder="e.g. 1017214">
+        </div>
+        <div class="field">
+          <label data-i18n="sv_date">SV Date</label>
+          <div class="date-wrap">
+            <input id="af-svdate" type="text" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)">
+            <span class="cal-icon">📅</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="generate-wrap">
+      <button class="btn-generate btn-docx" id="btn-af-docx" onclick="generateDoc('affidavit','docx')">
+        <div class="spinner"></div>
+        <span class="btn-text" data-i18n="btn_download_doc">⬇ Download Document (.docx)</span>
+      </button>
+      <button class="btn-generate btn-pdf" id="btn-af-pdf" onclick="generateDoc('affidavit','pdf')">
+        <div class="spinner"></div>
+        <span class="btn-text" data-i18n="btn_download_pdf">⬇ Download PDF</span>
+      </button>
+      <div class="status-msg" id="status-af"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Translations ────────────────────────────────────────────
+const i18n = {
+  en: {
+    header_title: 'Gas Connection Document Generator',
+    header_sub: 'S. Rasiklal & Brothers · Mahad, Raigad',
+    select_doc: 'Select Document Type',
+    card_ration_title: 'No Ration Card Affidavit',
+    card_ration_desc: 'For new LPG connections where applicant does not have a ration card',
+    card_affidavit_title: 'Affidavit for Change of Name',
+    card_affidavit_desc: 'Transfer HP Gas connection from deceased family member to applicant',
+    applicant_details: 'Applicant Details',
+    personal_info: 'Personal Information',
+    full_name_title: 'Full Name with Title',
+    father_husband: "Father's / Husband's Name",
+    age: 'Age (years)',
+    dob: 'Date of Birth',
+    today_date: "Today's Date",
+    address: 'Residential Address',
+    btn_download_doc: '⬇ Download Document (.docx)',
+    btn_download_pdf: '⬇ Download PDF',
+    doc_applicant_details: 'Document & Applicant Details',
+    dates: 'Dates',
+    magistrate_date: 'Magistrate Date (top of doc)',
+    applicant_living: 'Applicant (Living Person)',
+    occupation: 'Occupation',
+    deceased_person: 'Deceased Person (HP Gas Connection Holder)',
+    relation: 'Relation to Applicant',
+    expired_on: 'Expired On (date)',
+    expired_at: 'Expired At (place)',
+    gas_details: 'Gas Connection Details',
+    sv_number: 'SV Number',
+    sv_date: 'SV Date',
+    ph_fullname: 'e.g. Pradeep Sampat Katkar',
+    ph_fullname_af: 'e.g. Gajanan Damodar Mahadik',
+    ph_father: 'e.g. Sampat Katkar',
+    ph_age: 'e.g. 34',
+    ph_address: 'e.g. Nangalwadi Phata Mahad Dist Raigad M.I.D.C 402301',
+    ph_address_af: 'e.g. Adhi Dongroli Mahad Raigad 402103',
+    ph_occupation: 'e.g. Farmer',
+    ph_dec_name: 'e.g. Saraswati Gajanan Mahadik',
+    ph_expplace: 'e.g. Dongroli (Adhi)',
+    mr_title: 'Mr', mrs_title: 'Mrs', miss_title: 'Miss',
+    rel_wife: 'Wife', rel_husband: 'Husband', rel_mother: 'Mother',
+    rel_father: 'Father', rel_grandmother: 'Grandmother', rel_grandfather: 'Grandfather',
+    rel_sister: 'Sister', rel_brother: 'Brother', rel_son: 'Son', rel_daughter: 'Daughter',
+    err_fill: 'Please fill all fields before generating.',
+    err_date: 'Please enter date in DD/MM/YYYY format.',
+    ok_docx: '✓ Document downloaded! Open in Word or Google Docs.',
+    ok_pdf: '✓ PDF downloaded successfully!',
+  },
+  mr: {
+    header_title: 'गॅस कनेक्शन कागदपत्र जनरेटर',
+    header_sub: 'श्री. रसिकलाल अँड ब्रदर्स · महाड, रायगड',
+    select_doc: 'कागदपत्र प्रकार निवडा',
+    card_ration_title: 'रेशन कार्ड नाही प्रतिज्ञापत्र',
+    card_ration_desc: 'नवीन LPG कनेक्शनसाठी जेथे अर्जदाराकडे रेशन कार्ड नाही',
+    card_affidavit_title: 'नाव बदलासाठी प्रतिज्ञापत्र',
+    card_affidavit_desc: 'मृत कुटुंब सदस्याकडून HP गॅस कनेक्शन अर्जदाराकडे हस्तांतरित करा',
+    applicant_details: 'अर्जदाराची माहिती',
+    personal_info: 'वैयक्तिक माहिती',
+    full_name_title: 'पूर्ण नाव व उपाधी',
+    father_husband: 'वडिलांचे / पतीचे नाव',
+    age: 'वय (वर्षे)',
+    dob: 'जन्म तारीख',
+    today_date: 'आजची तारीख',
+    address: 'निवासी पत्ता',
+    btn_download_doc: '⬇ कागदपत्र डाउनलोड करा (.docx)',
+    btn_download_pdf: '⬇ PDF डाउनलोड करा',
+    doc_applicant_details: 'कागदपत्र व अर्जदाराची माहिती',
+    dates: 'तारखा',
+    magistrate_date: 'दंडाधिकारी तारीख (वरच्या भागात)',
+    applicant_living: 'अर्जदार (जिवंत व्यक्ती)',
+    occupation: 'व्यवसाय',
+    deceased_person: 'मृत व्यक्ती (HP गॅस कनेक्शन धारक)',
+    relation: 'अर्जदाराशी नाते',
+    expired_on: 'मृत्यू तारीख',
+    expired_at: 'मृत्यू ठिकाण',
+    gas_details: 'गॅस कनेक्शन तपशील',
+    sv_number: 'SV क्रमांक',
+    sv_date: 'SV तारीख',
+    ph_fullname: 'उदा. प्रदीप संपत कातकर',
+    ph_fullname_af: 'उदा. गजानन दामोदर महाडिक',
+    ph_father: 'उदा. संपत कातकर',
+    ph_age: 'उदा. ३४',
+    ph_address: 'उदा. नांगलवाडी फाटा महाड जि. रायगड ४०२३०१',
+    ph_address_af: 'उदा. आढी डोंगरोळी महाड रायगड ४०२१०३',
+    ph_occupation: 'उदा. शेतकरी',
+    ph_dec_name: 'उदा. सरस्वती गजानन महाडिक',
+    ph_expplace: 'उदा. डोंगरोळी (आढी)',
+    mr_title: 'श्री', mrs_title: 'श्रीमती', miss_title: 'कुमारी',
+    rel_wife: 'पत्नी', rel_husband: 'पती', rel_mother: 'आई',
+    rel_father: 'वडील', rel_grandmother: 'आजी', rel_grandfather: 'आजोबा',
+    rel_sister: 'बहीण', rel_brother: 'भाऊ', rel_son: 'मुलगा', rel_daughter: 'मुलगी',
+    err_fill: 'कृपया सर्व माहिती भरा.',
+    err_date: 'कृपया DD/MM/YYYY स्वरूपात तारीख टाका.',
+    ok_docx: '✓ कागदपत्र डाउनलोड झाले! Word किंवा Google Docs मध्ये उघडा.',
+    ok_pdf: '✓ PDF यशस्वीरित्या डाउनलोड झाली!',
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const t = i18n[currentLang];
+  // text nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+  // placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.getAttribute('data-i18n-ph');
+    if (t[key] !== undefined) el.placeholder = t[key];
+  });
+  // select options
+  document.querySelectorAll('[data-i18n-opt]').forEach(el => {
+    const key = el.getAttribute('data-i18n-opt');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+}
+
+// ── Date formatting (auto-insert slashes) ────────────────────
+function formatDate(input) {
+  let val = input.value.replace(/\D/g, '').substring(0, 8);
+  if (val.length >= 5) val = val.substring(0,2) + '/' + val.substring(2,4) + '/' + val.substring(4);
+  else if (val.length >= 3) val = val.substring(0,2) + '/' + val.substring(2);
+  input.value = val;
+}
+
+function isValidDate(str) {
+  if (!/^\d{2}\/\d{2}\/(\d{2}|\d{4})$/.test(str)) return false;
+  const [d, m, y] = str.split('/').map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  return true;
+}
+
+// Set today's date in dd/mm/yyyy
+function todayStr() {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2,'0');
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const y = now.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+// ── Doc select ───────────────────────────────────────────────
+let currentDoc = null;
+
+function selectDoc(type) {
+  currentDoc = type;
+  document.getElementById('card-ration').classList.toggle('active', type === 'no-ration');
+  document.getElementById('card-affidavit').classList.toggle('active', type === 'affidavit');
+  document.querySelectorAll('.form-area').forEach(el => el.style.display = 'none');
+  const target = document.getElementById('form-' + type);
+  if (target) {
+    target.style.display = 'block';
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ── Loading state ────────────────────────────────────────────
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
+
+function setStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  el.className = 'status-msg ' + type;
+  el.textContent = msg;
+}
+
+// ── Generate ─────────────────────────────────────────────────
+async function generateDoc(docType, fmt) {
+  const t = i18n[currentLang];
+  const isRation = docType === 'no-ration';
+  const btnId = isRation
+    ? (fmt === 'pdf' ? 'btn-nr-pdf' : 'btn-nr-docx')
+    : (fmt === 'pdf' ? 'btn-af-pdf' : 'btn-af-docx');
+  const statusId = isRation ? 'status-nr' : 'status-af';
+
+  let payload, filename;
+
+  if (isRation) {
+    const title    = document.getElementById('nr-title').value;
+    const fullname = document.getElementById('nr-fullname').value.trim();
+    const father   = document.getElementById('nr-father').value.trim();
+    const age      = document.getElementById('nr-age').value.trim();
+    const dob      = document.getElementById('nr-dob').value.trim();
+    const address  = document.getElementById('nr-address').value.trim();
+    const today    = document.getElementById('nr-today').value.trim();
+
+    if (!fullname || !father || !age || !address) {
+      setStatus(statusId, 'error', t.err_fill); return;
+    }
+    if (!isValidDate(dob) || !isValidDate(today)) {
+      setStatus(statusId, 'error', t.err_date); return;
+    }
+
+    payload = { applicantTitle: title, applicantFullName: fullname,
+                fatherHusbandName: father, age, dob, address, todayDate: today };
+    filename = `No_RationCard_${fullname.replace(/\s+/g,'_')}`;
+  } else {
+    const magDate  = document.getElementById('af-magdate').value.trim();
+    const title    = document.getElementById('af-title').value;
+    const fullname = document.getElementById('af-fullname').value.trim();
+    const age      = document.getElementById('af-age').value.trim();
+    const occ      = document.getElementById('af-occupation').value.trim();
+    const address  = document.getElementById('af-address').value.trim();
+    const relation = document.getElementById('af-relation').value;
+    const decTitle = document.getElementById('af-dec-title').value;
+    const decName  = document.getElementById('af-dec-name').value.trim();
+    const expDate  = document.getElementById('af-expdate').value.trim();
+    const expPlace = document.getElementById('af-expplace').value.trim();
+    const svNum    = document.getElementById('af-svnum').value.trim();
+    const svDate   = document.getElementById('af-svdate').value.trim();
+    const today    = document.getElementById('af-today').value.trim();
+
+    if (!fullname || !age || !occ || !address || !decName || !expPlace || !svNum) {
+      setStatus(statusId, 'error', t.err_fill); return;
+    }
+    const datesToCheck = [magDate, expDate, svDate, today];
+    if (datesToCheck.some(d => !isValidDate(d))) {
+      setStatus(statusId, 'error', t.err_date); return;
+    }
+
+    payload = {
+      magistrateDate: magDate, applicantTitle: title, applicantFullName: fullname,
+      applicantAge: age, occupation: occ, applicantAddress: address,
+      deceasedRelation: relation, deceasedTitle: decTitle, deceasedFullName: decName,
+      svNumber: svNum, svDate, expiredDate: expDate, expiredPlace: expPlace, todayDate: today
+    };
+    filename = `Affidavit_${fullname.replace(/\s+/g,'_')}`;
+  }
+
+  setLoading(btnId, true);
+  setStatus(statusId, '', '');
+
+  try {
+    const endpoint = `/generate/${docType}?format=${fmt}`;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.${fmt}`;
+    a.click();
+    setStatus(statusId, 'success', fmt === 'pdf' ? t.ok_pdf : t.ok_docx);
+  } catch (e) {
+    setStatus(statusId, 'error', '✗ Error: ' + e.message);
+  } finally {
+    setLoading(btnId, false);
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────
+const td = todayStr();
+document.getElementById('nr-today').value = td;
+document.getElementById('af-today').value = td;
+document.getElementById('af-magdate').value = td;
+applyTranslations();
+</script>
+</body>
+</html>
