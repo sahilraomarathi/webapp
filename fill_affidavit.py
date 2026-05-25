@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """
-Fill Affidavit_For_Change_Of_Name.docx, save as .docx or convert to PDF via pandoc.
+Fill Affidavit_For_Change_Of_Name.docx, save as .docx or convert to PDF via LibreOffice.
 Usage: python3 fill_affidavit.py <json_input> <output_path> <format: docx|pdf>
 """
 import sys
 import json
 import os
 import tempfile
+import shutil
 import subprocess
 from datetime import datetime
 from docx import Document
+
+# Add the project root to path so we can import the office helper
+sys.path.insert(0, os.path.dirname(__file__))
+from office.soffice import run_soffice
 
 def replace_in_paragraph(para, old, new):
     full_text = ''.join(run.text for run in para.runs)
@@ -39,15 +44,23 @@ def get_day_name(date_str):
     return dt.strftime("%A")
 
 def convert_to_pdf(docx_path, pdf_path):
-    """Convert docx to PDF using pandoc + wkhtmltopdf (no root/LibreOffice needed)."""
-    result = subprocess.run(
-        ['pandoc', docx_path, '-o', pdf_path,
-         '--pdf-engine=wkhtmltopdf',
-         '--metadata', 'title=Document'],
-        capture_output=True, text=True, timeout=45
-    )
-    if not os.path.exists(pdf_path):
-        raise RuntimeError(f"PDF conversion failed: {result.stderr}")
+    """Convert docx to PDF using LibreOffice — preserves layout and fonts exactly."""
+    out_dir = tempfile.mkdtemp()
+    try:
+        result = run_soffice([
+            '--headless',
+            '--convert-to', 'pdf',
+            '--outdir', out_dir,
+            docx_path
+        ], capture_output=True, text=True, timeout=60)
+        # LibreOffice names the output after the input file
+        base = os.path.splitext(os.path.basename(docx_path))[0]
+        generated = os.path.join(out_dir, base + '.pdf')
+        if not os.path.exists(generated):
+            raise RuntimeError(f"PDF conversion failed:\n{result.stderr}")
+        shutil.move(generated, pdf_path)
+    finally:
+        shutil.rmtree(out_dir, ignore_errors=True)
 
 def fill_affidavit(data, template_path, out_path, fmt='docx'):
     doc = Document(template_path)
