@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Fill No_RationCard.docx template, save as .docx or convert to PDF.
+Fill No_RationCard.docx template, save as .docx or convert to PDF via pandoc.
 Usage: python3 fill_no_ration.py <json_input> <output_path> <format: docx|pdf>
 """
 import sys
 import json
 import os
-import subprocess
 import tempfile
+import subprocess
 from docx import Document
 
 def replace_in_paragraph(para, old, new):
@@ -29,6 +29,17 @@ def replace_in_doc(doc, old, new):
             for cell in row.cells:
                 for para in cell.paragraphs:
                     replace_in_paragraph(para, old, new)
+
+def convert_to_pdf(docx_path, pdf_path):
+    """Convert docx to PDF using pandoc + wkhtmltopdf (no root/LibreOffice needed)."""
+    result = subprocess.run(
+        ['pandoc', docx_path, '-o', pdf_path,
+         '--pdf-engine=wkhtmltopdf',
+         '--metadata', 'title=Document'],
+        capture_output=True, text=True, timeout=45
+    )
+    if not os.path.exists(pdf_path):
+        raise RuntimeError(f"PDF conversion failed: {result.stderr}")
 
 def fill_no_ration(data, template_path, out_path, fmt='docx'):
     doc = Document(template_path)
@@ -53,23 +64,12 @@ def fill_no_ration(data, template_path, out_path, fmt='docx'):
         with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
             tmp_docx = tmp.name
         doc.save(tmp_docx)
-        convert_to_pdf(tmp_docx, out_path)
-        os.unlink(tmp_docx)
+        try:
+            convert_to_pdf(tmp_docx, out_path)
+        finally:
+            os.unlink(tmp_docx)
     else:
         doc.save(out_path)
-
-def convert_to_pdf(docx_path, pdf_path):
-    out_dir = os.path.dirname(pdf_path)
-    result = subprocess.run(
-        ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', out_dir, docx_path],
-        capture_output=True, text=True, timeout=45
-    )
-    # LibreOffice names the output after the input file
-    generated = os.path.join(out_dir, os.path.splitext(os.path.basename(docx_path))[0] + '.pdf')
-    if os.path.exists(generated) and generated != pdf_path:
-        os.rename(generated, pdf_path)
-    elif not os.path.exists(pdf_path):
-        raise RuntimeError(f"PDF conversion failed: {result.stderr}")
 
 if __name__ == "__main__":
     data = json.loads(sys.argv[1])

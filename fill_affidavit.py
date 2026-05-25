@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Fill Affidavit_For_Change_Of_Name.docx, save as .docx or convert to PDF.
+Fill Affidavit_For_Change_Of_Name.docx, save as .docx or convert to PDF via pandoc.
 Usage: python3 fill_affidavit.py <json_input> <output_path> <format: docx|pdf>
 """
 import sys
 import json
 import os
-import subprocess
 import tempfile
+import subprocess
 from datetime import datetime
 from docx import Document
 
@@ -39,15 +39,14 @@ def get_day_name(date_str):
     return dt.strftime("%A")
 
 def convert_to_pdf(docx_path, pdf_path):
-    out_dir = os.path.dirname(pdf_path)
+    """Convert docx to PDF using pandoc + wkhtmltopdf (no root/LibreOffice needed)."""
     result = subprocess.run(
-        ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', out_dir, docx_path],
+        ['pandoc', docx_path, '-o', pdf_path,
+         '--pdf-engine=wkhtmltopdf',
+         '--metadata', 'title=Document'],
         capture_output=True, text=True, timeout=45
     )
-    generated = os.path.join(out_dir, os.path.splitext(os.path.basename(docx_path))[0] + '.pdf')
-    if os.path.exists(generated) and generated != pdf_path:
-        os.rename(generated, pdf_path)
-    elif not os.path.exists(pdf_path):
+    if not os.path.exists(pdf_path):
         raise RuntimeError(f"PDF conversion failed: {result.stderr}")
 
 def fill_affidavit(data, template_path, out_path, fmt='docx'):
@@ -97,8 +96,10 @@ def fill_affidavit(data, template_path, out_path, fmt='docx'):
         with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
             tmp_docx = tmp.name
         doc.save(tmp_docx)
-        convert_to_pdf(tmp_docx, out_path)
-        os.unlink(tmp_docx)
+        try:
+            convert_to_pdf(tmp_docx, out_path)
+        finally:
+            os.unlink(tmp_docx)
     else:
         doc.save(out_path)
 
