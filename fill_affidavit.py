@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Fill Affidavit_For_Change_Of_Name.docx and save as .docx (no PDF conversion).
-Usage: python3 fill_affidavit.py <json_input> <output_docx_path>
+Fill Affidavit_For_Change_Of_Name.docx, save as .docx or convert to PDF.
+Usage: python3 fill_affidavit.py <json_input> <output_path> <format: docx|pdf>
 """
 import sys
 import json
 import os
+import subprocess
+import tempfile
 from datetime import datetime
 from docx import Document
 
@@ -36,7 +38,19 @@ def get_day_name(date_str):
     dt = datetime.strptime(f"{parts[0]}/{parts[1]}/{parts[2]}", "%d/%m/%Y")
     return dt.strftime("%A")
 
-def fill_affidavit(data, template_path, out_docx):
+def convert_to_pdf(docx_path, pdf_path):
+    out_dir = os.path.dirname(pdf_path)
+    result = subprocess.run(
+        ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', out_dir, docx_path],
+        capture_output=True, text=True, timeout=45
+    )
+    generated = os.path.join(out_dir, os.path.splitext(os.path.basename(docx_path))[0] + '.pdf')
+    if os.path.exists(generated) and generated != pdf_path:
+        os.rename(generated, pdf_path)
+    elif not os.path.exists(pdf_path):
+        raise RuntimeError(f"PDF conversion failed: {result.stderr}")
+
+def fill_affidavit(data, template_path, out_path, fmt='docx'):
     doc = Document(template_path)
 
     mag_date   = data['magistrateDate']
@@ -79,11 +93,19 @@ def fill_affidavit(data, template_path, out_docx):
     replace_in_doc(doc, "Mr. Gajanan Damodar Mahadik", f"{title}. {full_name}")
     replace_in_doc(doc, "25/05/26", today_date)
 
-    doc.save(out_docx)
+    if fmt == 'pdf':
+        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
+            tmp_docx = tmp.name
+        doc.save(tmp_docx)
+        convert_to_pdf(tmp_docx, out_path)
+        os.unlink(tmp_docx)
+    else:
+        doc.save(out_path)
 
 if __name__ == "__main__":
     data = json.loads(sys.argv[1])
-    out_docx = sys.argv[2]
+    out_path = sys.argv[2]
+    fmt = sys.argv[3] if len(sys.argv) > 3 else 'docx'
     template = os.path.join(os.path.dirname(__file__), "templates", "Affidavit_For_Change_Of_Name.docx")
-    fill_affidavit(data, template, out_docx)
+    fill_affidavit(data, template, out_path, fmt)
     print("OK")

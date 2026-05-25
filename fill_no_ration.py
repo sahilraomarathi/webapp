@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Fill No_RationCard.docx template and save as .docx (no PDF conversion).
-Usage: python3 fill_no_ration.py <json_input> <output_docx_path>
+Fill No_RationCard.docx template, save as .docx or convert to PDF.
+Usage: python3 fill_no_ration.py <json_input> <output_path> <format: docx|pdf>
 """
 import sys
 import json
 import os
+import subprocess
+import tempfile
 from docx import Document
 
 def replace_in_paragraph(para, old, new):
@@ -28,7 +30,7 @@ def replace_in_doc(doc, old, new):
                 for para in cell.paragraphs:
                     replace_in_paragraph(para, old, new)
 
-def fill_no_ration(data, template_path, out_docx):
+def fill_no_ration(data, template_path, out_path, fmt='docx'):
     doc = Document(template_path)
 
     title       = data['applicantTitle']
@@ -47,11 +49,32 @@ def fill_no_ration(data, template_path, out_docx):
     replace_in_doc(doc, "25/05/26", today_date)
     replace_in_doc(doc, "Mr. Pradeep Sampat Katkar", f"{title}. {full_name}")
 
-    doc.save(out_docx)
+    if fmt == 'pdf':
+        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
+            tmp_docx = tmp.name
+        doc.save(tmp_docx)
+        convert_to_pdf(tmp_docx, out_path)
+        os.unlink(tmp_docx)
+    else:
+        doc.save(out_path)
+
+def convert_to_pdf(docx_path, pdf_path):
+    out_dir = os.path.dirname(pdf_path)
+    result = subprocess.run(
+        ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', out_dir, docx_path],
+        capture_output=True, text=True, timeout=45
+    )
+    # LibreOffice names the output after the input file
+    generated = os.path.join(out_dir, os.path.splitext(os.path.basename(docx_path))[0] + '.pdf')
+    if os.path.exists(generated) and generated != pdf_path:
+        os.rename(generated, pdf_path)
+    elif not os.path.exists(pdf_path):
+        raise RuntimeError(f"PDF conversion failed: {result.stderr}")
 
 if __name__ == "__main__":
     data = json.loads(sys.argv[1])
-    out_docx = sys.argv[2]
+    out_path = sys.argv[2]
+    fmt = sys.argv[3] if len(sys.argv) > 3 else 'docx'
     template = os.path.join(os.path.dirname(__file__), "templates", "No_RationCard.docx")
-    fill_no_ration(data, template, out_docx)
+    fill_no_ration(data, template, out_path, fmt)
     print("OK")
